@@ -80,8 +80,11 @@ public class TedApplication {
         editorContainer.setLayoutManager(new BorderLayout());
         editorContainer.addComponent(editorPanel.setLayoutData(BorderLayout.Location.CENTER));
 
-        root.addComponent(menuPanel.setLayoutData(BorderLayout.Location.TOP));
-        root.addComponent(tabPanel.setLayoutData(BorderLayout.Location.TOP));
+        Panel chromeTop = new Panel();
+        chromeTop.setLayoutManager(new LinearLayout(Direction.VERTICAL));
+        chromeTop.addComponent(menuPanel.setLayoutData(LinearLayout.createLayoutData(LinearLayout.Alignment.Fill)));
+        chromeTop.addComponent(tabPanel.setLayoutData(LinearLayout.createLayoutData(LinearLayout.Alignment.Fill)));
+        root.addComponent(chromeTop.setLayoutData(BorderLayout.Location.TOP));
         root.addComponent(editorContainer.setLayoutData(BorderLayout.Location.CENTER));
         root.addComponent(statusPanel.setLayoutData(BorderLayout.Location.BOTTOM));
 

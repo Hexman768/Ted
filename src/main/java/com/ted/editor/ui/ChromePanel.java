@@ -16,21 +16,21 @@ public final class ChromePanel {
 
     public static Panel menuBar() {
         MenuPanel panel = new MenuPanel();
-        panel.setPreferredSize(new TerminalSize(80, TurboTheme.MENU_HEIGHT));
+        panel.setPreferredSize(new TerminalSize(1, TurboTheme.MENU_HEIGHT));
         panel.setFillColorOverride(TurboTheme.CHROME_BG);
         return panel;
     }
 
     public static Panel tabBar(TabManager tabManager) {
         TabPanel panel = new TabPanel(tabManager);
-        panel.setPreferredSize(new TerminalSize(80, TurboTheme.TAB_HEIGHT));
+        panel.setPreferredSize(new TerminalSize(1, TurboTheme.TAB_HEIGHT));
         panel.setFillColorOverride(TurboTheme.BG);
         return panel;
     }
 
     public static Panel statusBar(AtomicReference<String> statusText) {
         StatusPanel panel = new StatusPanel(statusText);
-        panel.setPreferredSize(new TerminalSize(80, TurboTheme.STATUS_HEIGHT));
+        panel.setPreferredSize(new TerminalSize(1, TurboTheme.STATUS_HEIGHT));
         panel.setFillColorOverride(TurboTheme.CHROME_BG);
         return panel;
     }
@@ -135,7 +135,7 @@ public final class ChromePanel {
             return new ComponentRenderer<>() {
                 @Override
                 public TerminalSize getPreferredSize(Panel c) {
-                    return c.getSize() != null ? c.getSize() : new TerminalSize(80, 1);
+                    return c.getSize() != null ? c.getSize() : new TerminalSize(1, 1);
                 }
 
                 @Override
@@ -158,7 +158,7 @@ public final class ChromePanel {
             return new ComponentRenderer<>() {
                 @Override
                 public TerminalSize getPreferredSize(Panel c) {
-                    return c.getSize() != null ? c.getSize() : new TerminalSize(80, 1);
+                    return c.getSize() != null ? c.getSize() : new TerminalSize(1, 1);
                 }
 
                 @Override
@@ -181,7 +181,7 @@ public final class ChromePanel {
             return new ComponentRenderer<>() {
                 @Override
                 public TerminalSize getPreferredSize(Panel c) {
-                    return c.getSize() != null ? c.getSize() : new TerminalSize(80, 1);
+                    return c.getSize() != null ? c.getSize() : new TerminalSize(1, 1);
                 }
 
                 @Override
