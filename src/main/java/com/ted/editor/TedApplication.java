@@ -8,6 +8,9 @@ import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.ted.editor.model.EditorBuffer;
 import com.ted.editor.model.TabManager;
+import com.ted.editor.plugin.KeyInputHandler;
+import com.ted.editor.plugin.PluginContext;
+import com.ted.editor.plugin.TedPlugin;
 import com.ted.editor.ui.ChromePanel;
 import com.ted.editor.ui.EditorPanel;
 import com.ted.editor.ui.FileDialogs;
@@ -17,6 +20,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.ServiceLoader;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class TedApplication {
@@ -53,6 +57,9 @@ public class TedApplication {
             }
         }
 
+        // Load Plugins
+        // How do I create the plugin context required here?
+        ServiceLoader.load(TedPlugin.class).forEach(p -> p.init(pluginContext));
         buildUi();
         editorPanel.takeFocus();
         mainWindow.waitUntilClosed();
