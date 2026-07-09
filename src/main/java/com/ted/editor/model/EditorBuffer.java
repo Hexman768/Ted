@@ -256,4 +256,10 @@ public class EditorBuffer {
         }
         inBlockComment = inBlock;
     }
+
+    // TODO: Define and implement these methods
+    void moveWordForward(boolean wordBound);
+    void moveWordBackward(boolean wordBound);
+    void moveToLine(int line);
+    int findCharForward(char c, int count);
 }
