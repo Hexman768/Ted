@@ -11,9 +11,12 @@ import com.googlecode.lanterna.input.KeyType;
 import com.ted.editor.TurboTheme;
 import com.ted.editor.model.EditorBuffer;
 import com.ted.editor.model.TabManager;
+import com.ted.editor.plugin.KeyInputContext;
+import com.ted.editor.plugin.KeyInputHandler;
 import com.ted.editor.syntax.SyntaxHighlighter;
 import com.ted.editor.syntax.Token;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -23,9 +26,23 @@ public class EditorPanel extends AbstractInteractableComponent<EditorPanel> {
     private Consumer<String> statusUpdater;
     private Runnable repaintRequest;
     private Consumer<KeyStroke> globalKeyHandler;
+    private final List<KeyInputHandler> keyInputHandlers = new ArrayList<>();
+    private String statusExtra = "";
 
     public EditorPanel(TabManager tabManager) {
         this.tabManager = tabManager;
+    }
+
+    public void setStatusExtra(String extra) {
+        this.statusExtra = extra != null ? extra : "";
+    }
+
+    public String statusExtra() {
+        return statusExtra;
+    }
+
+    public void addKeyInputHandler(KeyInputHandler handler) {
+        keyInputHandlers.add(handler);
     }
 
     public void setStatusUpdater(Consumer<String> statusUpdater) {
@@ -57,11 +74,14 @@ public class EditorPanel extends AbstractInteractableComponent<EditorPanel> {
     private void updateStatus() {
         if (statusUpdater != null) {
             EditorBuffer buf = tabManager.activeBuffer();
-            statusUpdater.accept(String.format(" Ln %d, Col %d  |  %s  |  %s ",
+            String modified = buf.isModified() ? "MODIFIED" : "      ";
+            String extra = statusExtra.isEmpty() ? "" : "  |  " + statusExtra;
+            statusUpdater.accept(String.format(" Ln %d, Col %d  |  %s  |  %s%s ",
                     buf.cursorLine() + 1,
                     buf.cursorColumn() + 1,
                     buf.getLanguage().displayName(),
-                    buf.isModified() ? "MODIFIED" : "      "));
+                    modified,
+                    extra));
         }
     }
 
@@ -169,14 +189,62 @@ public class EditorPanel extends AbstractInteractableComponent<EditorPanel> {
             return Interactable.Result.HANDLED;
         }
 
-        if (key.getKeyType() == KeyType.Escape) {
-            return Interactable.Result.UNHANDLED;
+        KeyInputContext ctx = createKeyInputContext();
+        for (KeyInputHandler handler : keyInputHandlers) {
+            if (handler.handleKey(key, ctx) == KeyInputHandler.Result.HANDLED) {
+                afterKeyHandled();
+                return Interactable.Result.HANDLED;
+            }
         }
 
+        if (handleDefaultKey(key)) {
+            afterKeyHandled();
+            return Interactable.Result.HANDLED;
+        }
+        return Interactable.Result.UNHANDLED;
+    }
+
+    private KeyInputContext createKeyInputContext() {
+        return new KeyInputContext() {
+            @Override
+            public EditorBuffer activeBuffer() {
+                return tabManager.activeBuffer();
+            }
+
+            @Override
+            public TabManager tabManager() {
+                return tabManager;
+            }
+
+            @Override
+            public TerminalSize visibleEditorSize() {
+                TerminalSize size = getSize();
+                return size != null ? size : new TerminalSize(80, 20);
+            }
+
+            @Override
+            public void refreshEditor() {
+                afterKeyHandled();
+            }
+        };
+    }
+
+    private void afterKeyHandled() {
+        refreshScroll();
+        invalidate();
+        if (repaintRequest != null) {
+            repaintRequest.run();
+        }
+    }
+
+    /** TED's built-in insert-mode key bindings; plugins can delegate here in insert mode. */
+    public boolean handleDefaultKey(KeyStroke key) {
         EditorBuffer buf = tabManager.activeBuffer();
-        boolean handled = true;
 
         switch (key.getKeyType()) {
+            case Escape -> {
+                return false;
+            }
             case ArrowUp -> buf.moveCursor(-1, 0);
             case ArrowDown -> buf.moveCursor(1, 0);
             case ArrowLeft -> buf.moveCursor(0, -1);
@@ -211,19 +279,14 @@ public class EditorPanel extends AbstractInteractableComponent<EditorPanel> {
                 if (!key.isCtrlDown() && !key.isAltDown()) {
                     buf.insertChar(key.getCharacter());
                 } else {
-                    handled = false;
+                    return false;
                 }
             }
-            default -> handled = false;
+            default -> {
+                return false;
+            }
         }
-
-        if (handled) {
-            refreshScroll();
-            invalidate();
-            if (repaintRequest != null) repaintRequest.run();
-            return Interactable.Result.HANDLED;
-        }
-        return Interactable.Result.UNHANDLED;
+        return true;
     }
 
     private boolean isGlobalKey(KeyStroke key) {

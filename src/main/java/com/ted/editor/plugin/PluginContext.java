@@ -3,10 +3,17 @@ package com.ted.editor.plugin;
 import com.ted.editor.model.TabManager;
 import com.ted.editor.ui.EditorPanel;
 
+/** Services available to plugins during {@link TedPlugin#init(PluginContext)}. */
 public interface PluginContext {
-    TabManager tabs();
-    EditorPanel editor();
-    void setStatus(String text);
+
+    TabManager tabManager();
+
+    EditorPanel editorPanel();
+
     void registerKeyHandler(KeyInputHandler handler);
-    void registerCommand(String id, Runnable action);
+
+    void setStatusText(String text);
+
+    /** Appended to the status bar after cursor info (e.g. {@code VIM -- NORMAL --}). */
+    void setStatusExtra(String extra);
 }

@@ -8,7 +8,7 @@ import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.ted.editor.model.EditorBuffer;
 import com.ted.editor.model.TabManager;
-import com.ted.editor.plugin.KeyInputHandler;
+import com.ted.editor.plugin.DefaultPluginContext;
 import com.ted.editor.plugin.PluginContext;
 import com.ted.editor.plugin.TedPlugin;
 import com.ted.editor.ui.ChromePanel;
@@ -57,10 +57,8 @@ public class TedApplication {
             }
         }
 
-        // Load Plugins
-        // How do I create the plugin context required here?
-        ServiceLoader.load(TedPlugin.class).forEach(p -> p.init(pluginContext));
         buildUi();
+        loadPlugins();
         editorPanel.takeFocus();
         mainWindow.waitUntilClosed();
         screen.stopScreen();
@@ -101,6 +99,22 @@ public class TedApplication {
         mainWindow.setCloseWindowWithEscape(false);
         gui.addWindow(mainWindow);
         mainWindow.setFocusedInteractable(editorPanel);
+    }
+
+    private void loadPlugins() {
+        PluginContext pluginContext = new DefaultPluginContext(tabManager, editorPanel, statusText);
+        ServiceLoader<TedPlugin> loader = ServiceLoader.load(TedPlugin.class);
+        int count = 0;
+        for (TedPlugin plugin : loader) {
+            plugin.init(pluginContext);
+            System.err.println("TED: loaded plugin " + plugin.name());
+            count++;
+        }
+        if (count == 0) {
+            System.err.println("TED: no plugins found (check META-INF/services/com.ted.editor.plugin.TedPlugin)");
+        }
+        editorPanel.refreshScroll();
+        refreshChrome();
     }
 
     private void refreshChrome() {
