@@ -256,4 +256,92 @@ public class EditorBuffer {
         }
         inBlockComment = inBlock;
     }
+
+    public void moveWordForward(boolean bigWord) {
+        if (lines.isEmpty()) return;
+        int line = cursorLine;
+        int col = cursorColumn;
+        while (line < lines.size()) {
+            String text = lines.get(line);
+            col = advanceWordForward(text, col, bigWord);
+            if (col <= text.length()) {
+                setCursor(line, Math.min(col, text.length()));
+                return;
+            }
+            line++;
+            col = 0;
+        }
+        moveToDocumentEnd();
+    }
+
+    public void moveWordBackward(boolean bigWord) {
+        if (lines.isEmpty()) return;
+        int line = cursorLine;
+        int col = cursorColumn;
+        while (line >= 0) {
+            String text = lines.get(line);
+            int nextCol = retreatWordBackward(text, col, bigWord);
+            if (nextCol >= 0) {
+                setCursor(line, nextCol);
+                return;
+            }
+            line--;
+            col = line >= 0 ? lines.get(line).length() : 0;
+        }
+        moveToDocumentStart();
+    }
+
+    public void moveToLine(int line) {
+        setCursor(line, cursorColumn);
+    }
+
+    public int findCharForward(char ch, int count) {
+        if (count < 1) count = 1;
+        int line = cursorLine;
+        int col = cursorColumn + 1;
+        while (line < lines.size()) {
+            String text = lines.get(line);
+            while (col < text.length()) {
+                if (text.charAt(col) == ch && --count == 0) {
+                    setCursor(line, col);
+                    return col;
+                }
+                col++;
+            }
+            line++;
+            col = 0;
+        }
+        return -1;
+    }
+
+    private static int advanceWordForward(String text, int col, boolean bigWord) {
+        int i = col;
+        if (i < text.length() && isWordChar(text.charAt(i), bigWord)) {
+            while (i < text.length() && isWordChar(text.charAt(i), bigWord)) i++;
+        } else if (i < text.length() && !Character.isWhitespace(text.charAt(i))) {
+            while (i < text.length() && !Character.isWhitespace(text.charAt(i))) i++;
+        }
+        while (i < text.length() && Character.isWhitespace(text.charAt(i))) i++;
+        return i;
+    }
+
+    private static int retreatWordBackward(String text, int col, boolean bigWord) {
+        int i = col;
+        if (i > 0 && Character.isWhitespace(text.charAt(i - 1))) {
+            while (i > 0 && Character.isWhitespace(text.charAt(i - 1))) i--;
+        }
+        if (i > 0 && isWordChar(text.charAt(i - 1), bigWord)) {
+            while (i > 0 && isWordChar(text.charAt(i - 1), bigWord)) i--;
+            return i;
+        }
+        if (i > 0 && !Character.isWhitespace(text.charAt(i - 1))) {
+            while (i > 0 && !Character.isWhitespace(text.charAt(i - 1))) i--;
+            return i;
+        }
+        return col > 0 ? 0 : -1;
+    }
+
+    private static boolean isWordChar(char ch, boolean bigWord) {
+        return bigWord ? !Character.isWhitespace(ch) : Character.isLetterOrDigit(ch) || ch == '_';
+    }
 }
