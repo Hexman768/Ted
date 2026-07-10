@@ -55,7 +55,7 @@ final class VimInputController implements KeyInputHandler {
                     return Result.HANDLED;
                 }
                 default -> {
-                    return Result.UNHANDLED;
+                    return Result.HANDLED;
                 }
             }
             return Result.HANDLED;
