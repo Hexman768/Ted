@@ -17,6 +17,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class TedApplication {
@@ -162,16 +163,20 @@ public class TedApplication {
     }
 
     private void openFile() {
-        FileDialogs.prompt(gui, "Open File", "Path:", System.getProperty("user.dir"))
+        Path start = Optional.ofNullable(tabManager.activeBuffer().getPath())
+                .map(Path::getParent)
+                .orElse(Paths.get(System.getProperty("user.dir")));
+        FileDialogs.chooseOpenFile(gui, start)
                 .ifPresent(path -> {
                     try {
-                        openFileQuiet(Paths.get(path));
+                        openFileQuiet(path);
                         refreshChrome();
                         editorPanel.takeFocus();
                     } catch (Exception e) {
                         FileDialogs.message(gui, "Error", "Cannot open: " + e.getMessage());
                     }
                 });
+        editorPanel.takeFocus();
     }
 
     private void openFileQuiet(Path path) throws Exception {
@@ -185,16 +190,22 @@ public class TedApplication {
         EditorBuffer buf = tabManager.activeBuffer();
         try {
             if (buf.getPath() == null) {
-                FileDialogs.prompt(gui, "Save As", "Path:", "untitled.txt")
+                Path start = Paths.get(System.getProperty("user.dir"));
+                FileDialogs.chooseSaveFile(gui, start, "untitled.txt")
                         .ifPresent(p -> {
                             try {
-                                buf.setPath(Paths.get(p));
+                                if (java.nio.file.Files.exists(p)
+                                        && !FileDialogs.confirm(gui, "Overwrite " + p.getFileName() + "?")) {
+                                    return;
+                                }
+                                buf.setPath(p);
                                 buf.save();
                                 refreshChrome();
                             } catch (Exception e) {
                                 FileDialogs.message(gui, "Error", e.getMessage());
                             }
                         });
+                editorPanel.takeFocus();
             } else {
                 buf.save();
                 refreshChrome();
