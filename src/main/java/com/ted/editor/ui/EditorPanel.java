@@ -80,14 +80,9 @@ public class EditorPanel extends AbstractInteractableComponent<EditorPanel> {
 
             @Override
             public TerminalPosition getCursorLocation(EditorPanel component) {
-                EditorBuffer buf = component.tabManager.activeBuffer();
-                int row = buf.cursorLine() - component.scrollRow;
-                if (row < 0 || row >= component.getSize().getRows()) {
-                    return null;
-                }
-                return new TerminalPosition(
-                        TurboTheme.GUTTER_WIDTH + buf.cursorColumn(),
-                        row);
+                // Hide the terminal's native cursor. TED paints its own block cursor;
+                // on light backgrounds a host block cursor is often white and disappears.
+                return null;
             }
         };
     }
@@ -159,7 +154,8 @@ public class EditorPanel extends AbstractInteractableComponent<EditorPanel> {
         }
         g.setForegroundColor(TurboTheme.CURSOR_FG);
         g.setBackgroundColor(TurboTheme.CURSOR_BG);
-        g.setCharacter(gutter + cursorCol, cursorScreenRow, ch == ' ' ? '\u2588' : ch);
+        // Always fill the cell; spaces use a full block so the caret stays visible.
+        g.setCharacter(gutter + cursorCol, cursorScreenRow, ch == ' ' || ch == '\t' ? '\u2588' : ch);
     }
 
     @Override
@@ -229,18 +225,19 @@ public class EditorPanel extends AbstractInteractableComponent<EditorPanel> {
     private boolean isGlobalKey(KeyStroke key) {
         if (key.getKeyType() == KeyType.F1 || key.getKeyType() == KeyType.F2 || key.getKeyType() == KeyType.F3
                 || key.getKeyType() == KeyType.F4 || key.getKeyType() == KeyType.F6
-                || key.getKeyType() == KeyType.F10) {
+                || key.getKeyType() == KeyType.F9 || key.getKeyType() == KeyType.F10) {
             return true;
         }
         if (key.isCtrlDown() && key.getKeyType() == KeyType.Character) {
             char c = Character.toLowerCase(key.getCharacter());
-            return c == 'q' || c == 's' || c == 'o' || c == 'n' || c == 'w' || c == '\t';
+            return c == 'q' || c == 's' || c == 'o' || c == 'n' || c == 'w' || c == 't' || c == '\t';
         }
         if (key.isCtrlDown() && key.isShiftDown() && key.getKeyType() == KeyType.Tab) {
             return true;
         }
         if (key.isAltDown() && key.getKeyType() == KeyType.Character) {
-            return key.getCharacter() >= '1' && key.getCharacter() <= '9';
+            char c = Character.toLowerCase(key.getCharacter());
+            return (c >= '1' && c <= '9') || c == 'f';
         }
         return key.getKeyType() == KeyType.Insert;
     }
